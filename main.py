@@ -1,6 +1,26 @@
 import random
 
 
+class NeuronModel:
+    def __init__(self):
+        self.InputLayer = InputLayer.all_neuron
+        self.ConjunctionLayer = ConjunctionLayer.all_neuron
+        self.OutputLayer = OutputLayer.all_neuron
+
+    # 결합 뉴런과 N:N 으로 연결
+    @staticmethod
+    def connect_conjunction():
+        for input_neuron in InputLayer.all_neuron:
+            for conjunction_neuron in ConjunctionLayer.all_neuron:
+                input_neuron.add_next_neuron(conjunction_neuron)
+
+    # output 뉴런과 1:1 로 연결
+    @staticmethod
+    def connect_output():
+        for conjunction_neuron, output_neuron in zip(ConjunctionLayer.all_neuron, OutputLayer.all_neuron):
+            conjunction_neuron.add_next_neuron(output_neuron)
+
+
 class Neuron:
     all_neuron = list()
 
@@ -25,10 +45,18 @@ class Neuron:
         # Add self to before neuron at next neuron
         neuron.before_neuron.append([self, weight])
 
+    # 이름 목록을 인자로 받아 객체를 생성합니다.
     @classmethod
     def make_neuron(cls, make_list):
         for name in make_list:
             cls(name)
+
+    # 다음 단계 뉴런으로 넘어감
+    @classmethod
+    def next_step(cls):
+        for neuron in cls.all_neuron:
+            for next_neuron, weight in neuron.next_neuron:
+                next_neuron.data += neuron.data * weight
 
 
 # 입력 뉴런
@@ -38,12 +66,6 @@ class InputLayer(Neuron):
     def __repr__(self):
         return "<Input Neuron %s>" % self.name
 
-    @classmethod
-    def connect_conjunction(cls):
-        for input_neuron in cls.all_neuron:
-            for conjunction_neuron in ConjunctionLayer.all_neuron:
-                input_neuron.add_next_neuron(conjunction_neuron)
-
 
 # 결합 뉴런
 class ConjunctionLayer(Neuron):
@@ -51,11 +73,6 @@ class ConjunctionLayer(Neuron):
 
     def __repr__(self):
         return "<Combine Neuron %s>" % self.name
-
-    @classmethod
-    def connect_output(cls):
-        for conjunction_neuron, output_neuron in zip(cls.all_neuron, OutputLayer.all_neuron):
-            conjunction_neuron.add_next_neuron(output_neuron)
 
 
 # 출력 뉴런
@@ -74,11 +91,13 @@ if __name__ == '__main__':
     InputLayer.connect_conjunction()
     ConjunctionLayer.connect_output()
 
-    answer_list = {'yes': 1, 'no': 0}
+    answer_list = {'yes': 1, 'no': -1, 'dunno': 0}
 
     # 입력 뉴런에 값을 입력함
     for input_neuron in InputLayer.all_neuron:
-        question = "%s가 있나요? yes/no : " % input_neuron.name
+        question = "%s가 있나요? yes/no/dunno : " % input_neuron.name
         input_neuron.data = answer_list[input(question)]
+
+    InputLayer.next_step()
 
     print()
