@@ -6,6 +6,7 @@ class Neuron:
 
     def __init__(self, name=""):
         self.name = name
+        self.data = 0
         self.next_neuron = list()
         self.before_neuron = list()
 
@@ -14,8 +15,9 @@ class Neuron:
     def __repr__(self):
         return "<Neuron %s>" % self.name
 
-    def add_next_neuron(self, neuron):
-        weight = random.random()
+    def add_next_neuron(self, neuron, weight=None):
+        if weight is None:
+            weight = random.random()
 
         # Add next neuron at self
         self.next_neuron.append([neuron, weight])
