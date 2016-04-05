@@ -74,4 +74,11 @@ if __name__ == '__main__':
     InputLayer.connect_conjunction()
     ConjunctionLayer.connect_output()
 
+    answer_list = {'yes': 1, 'no': 0}
+
+    # 입력 뉴런에 값을 입력함
+    for input_neuron in InputLayer.all_neuron:
+        question = "%s가 있나요? yes/no : " % input_neuron.name
+        input_neuron.data = answer_list[input(question)]
+
     print()
