@@ -58,10 +58,10 @@ class OutputLayer(Neuron):
 
 
 class NeuronModel:
-    def __init__(self, input_list, conjunction_list, output_list):
-        self.InputLayer = [InputLayer(input_name) for input_name in input_list]
-        self.ConjunctionLayer = [ConjunctionLayer(conjunction_name) for conjunction_name in conjunction_list]
-        self.OutputLayer = [OutputLayer(output_name) for output_name in output_list]
+    def __init__(self, input_name_list, conjunction_name_list, output_name_list):
+        self.InputLayer = [InputLayer(input_name) for input_name in input_name_list]
+        self.ConjunctionLayer = [ConjunctionLayer(conjunction_name) for conjunction_name in conjunction_name_list]
+        self.OutputLayer = [OutputLayer(output_name) for output_name in output_name_list]
 
         self.connect_conjunction()
         self.connect_output()
