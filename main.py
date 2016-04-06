@@ -122,7 +122,8 @@ class NeuronModel:
             # 출력 뉴런으로 데이터 전달
             self.ConjunctionLayer[conjunction_name].next_step()
 
-        print(1)
+        # 모든 결합 뉴런 중, data 가 가장 큰 뉴런 객체를 반환합니다
+        return max(OutputLayer.all_neuron, key=lambda output_neuron: output_neuron.data)
 
     def train(self, train_data):
         """
@@ -140,9 +141,14 @@ class NeuronModel:
             input5 = -1 ( 엔진 없어요 )
             result = 1 ( 두 번째 결과. 여기서는 새)
 
+        result 값
+            0: 비행기
+            1: 새
+            2: 글라이더
+            리스트 index 값과 같다.
         """
 
-        self.get_result(train_data)
+        result_neuron = self.get_result(train_data)
 
         return None
 
