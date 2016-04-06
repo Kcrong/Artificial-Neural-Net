@@ -2,7 +2,6 @@ import random
 
 
 class Neuron:
-    all_neuron = list()
 
     def __init__(self, name=""):
         self.name = name
