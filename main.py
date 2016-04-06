@@ -97,7 +97,7 @@ class NeuronModel:
     # output 뉴런과 1:1 로 연결
     def connect_output(self):
         for conjunctionlayer_name, outputlayer_name in zip(self.ConjunctionLayer, self.OutputLayer):
-            self.ConjunctionLayer[conjunctionlayer_name].add_next_neuron(self.OutputLayer[outputlayer_name])
+            self.ConjunctionLayer[conjunctionlayer_name].add_next_neuron(self.OutputLayer[outputlayer_name], 1)
 
     def get_result(self, input_list):
         """
@@ -123,7 +123,7 @@ class NeuronModel:
         # 모든 결합 뉴런 중, data 가 가장 큰 뉴런 객체를 반환합니다
         return max(OutputLayer.all_neuron, key=lambda output_neuron: output_neuron.data)
 
-    def train(self, train_data, result):
+    def train(self, train_data):
         """
         Train weight of Neural Connect
         :param train_data: [**input, result]
@@ -147,7 +147,12 @@ class NeuronModel:
         """
 
         # train_data[-1] ---> train_result (위 주석에서 언급한 result 값)
-        train_neuron = OutputLayer.all_neuron[result]
+        try:
+            train_neuron = OutputLayer.all_neuron[train_data[-1]]
+        except IndexError:
+            # 학습 데이터에서 빈 줄이 왔을 경우
+            # len(train_data) == 0
+            return None
 
         # 실제 가중치 계산을 통해 도출된 출력 뉴런
         result_neuron = self.get_result(train_data)
@@ -155,8 +160,7 @@ class NeuronModel:
         if train_neuron != result_neuron:
             self.fix_weight(train_neuron, result_neuron)
 
-    @staticmethod
-    def fix_weight(train_result_neuron, result_neuron):
+    def fix_weight(self, train_result_neuron, result_neuron):
         """
         :param train_result_neuron: 학습 데이터의 출력 뉴런
         :param result_neuron: 실제 계산 후 도출된 출력 뉴런
@@ -181,8 +185,8 @@ class NeuronModel:
 
                 # 활성화 된 입력 뉴런만
                 else:
-                    # 가중치 20% 증가
-                    input_neuron_list[index][1] = (input_neuron_list[index][1] * 1.2)
+                    # 가중치 40% 증가
+                    input_neuron_list[index][1] = (input_neuron_list[index][1] * 1.6)
 
         # 잘못된 출력 뉴런 결과값에 대한 입력 뉴런 가중치 감소
 
@@ -193,10 +197,14 @@ class NeuronModel:
             for index in range(len(input_neuron_list)):
                 input_neuron, weight = input_neuron_list[index]
 
+                # 비활성화 된 입력 뉴런은 넘어감
+                if input_neuron.data == 0:
+                    continue
+
                 # 활성화 된 입력 뉴런만
-                if input_neuron.data == 1:
-                    # 가중치 20% 감소
-                    input_neuron_list[index][1] = (input_neuron_list[index][1] * 0.8)
+                else:
+                    # 가중치 40% 감소
+                    input_neuron_list[index][1] = (input_neuron_list[index][1] * 0.4)
 
 
 if __name__ == '__main__':
@@ -207,13 +215,15 @@ if __name__ == '__main__':
 
     model = NeuronModel(input_list, conjunction_list, output_list)
 
-    model.train([1, 0, 1, 1, -1], 1)
+    with open('train_data.txt', 'r') as f:
+        all_train_data = [[int(data) for data in train_data.split()] for train_data in f.readlines()]
+
+    for train_data in all_train_data:
+        model.train(train_data)
 
     answer_list = {'yes': 1, 'no': -1, 'dunno': 0}
 
-    # 입력 뉴런에 값을 입력함
-    for inputlayer_name in model.InputLayer:
-        question = "%s가 있나요? yes/no/dunno : " % model.InputLayer[inputlayer_name].name
-        model.InputLayer[inputlayer_name].data = answer_list[input(question)]
+    input_data = [answer_list[input(model.InputLayer[inputlayer_name].name + "가 있나요? yes/no/dunno : ")]
+                  for inputlayer_name in model.InputLayer]
 
-    print()
+    print("결과 : " + model.get_result(input_data).name)
