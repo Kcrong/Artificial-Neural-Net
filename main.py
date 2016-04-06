@@ -173,8 +173,16 @@ class NeuronModel:
             # 결합 뉴런에 연결되어 있는 모든 입력 뉴런에 대해
             input_neuron_list = conjunction_neuron.before_neuron
             for index in range(len(input_neuron_list)):
-                # 가중치 20% 증가
-                input_neuron_list[index][1] = (input_neuron_list[index][1] * 1.2)
+                input_neuron, weight = input_neuron_list[index]
+
+                # 비활성화 된 입력 뉴런은 넘어감
+                if input_neuron.data == 0:
+                    continue
+
+                # 활성화 된 입력 뉴런만
+                else:
+                    # 가중치 20% 증가
+                    input_neuron_list[index][1] = (input_neuron_list[index][1] * 1.2)
 
         # 잘못된 출력 뉴런 결과값에 대한 입력 뉴런 가중치 감소
 
@@ -183,8 +191,12 @@ class NeuronModel:
             # 결합 뉴런에 연결되어 있는 모든 입력 뉴런에 대해
             input_neuron_list = conjunction_neuron.before_neuron
             for index in range(len(input_neuron_list)):
-                # 가중치 20% 감소
-                input_neuron_list[index][1] = (input_neuron_list[index][1] * 0.8)
+                input_neuron, weight = input_neuron_list[index]
+
+                # 활성화 된 입력 뉴런만
+                if input_neuron.data == 1:
+                    # 가중치 20% 감소
+                    input_neuron_list[index][1] = (input_neuron_list[index][1] * 0.8)
 
 
 if __name__ == '__main__':
