@@ -35,8 +35,4 @@ Ex)
     부리가 있나요? yes/no/dunno : yes
     깃털가 있나요? yes/no/dunno : yes
     결과 : 새
-    
-내부 소스의  
-InputLayer (날개, 꼬리, 엔진 등) 와 ConjunctionLayer (규칙1, 규칙2 등) 등과 질문을 바꾸고  
-학습데이터를 알맞게 넣는 다면, 다른 결과를 이끌어 내는 것도 가능할 듯
 
