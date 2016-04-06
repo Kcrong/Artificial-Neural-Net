@@ -36,3 +36,4 @@ Ex)
     깃털가 있나요? yes/no/dunno : yes
     결과 : 새
 
+([학습데이터](https://github.com/Kcrong/Artificial-Neural-Net-Simple-Example/blob/master/train_data.txt)의 경우 임의로 적어놓은 값입니다.)
