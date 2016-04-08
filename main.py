@@ -280,6 +280,8 @@ def language_processing(input_data):
                         if word_list[tmp_index] == '않':
                             yn *= -1
                             break
+                    elif pos_list[tmp_index] == 'NNG':
+                        break  # 다음 명사가 나오면 종료
                     tmp_index += 1
 
             # 그 전까지의 모든 명사를 위 yn 데이터로 저장
@@ -327,7 +329,7 @@ if __name__ == '__main__':
         print(language_processing(i))
         print("")
 
-    nl_data = language_processing(input("특징을 입력해주세요 : "))
+    nl_data = language_processing(input("특징을 입력해주세요 : \n"))
     print(nl_data)
     input_data = [nl_data[name] for name in input_list]
 
