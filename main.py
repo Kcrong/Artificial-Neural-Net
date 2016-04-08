@@ -1,8 +1,8 @@
 import random
+from konlpy.tag import Mecab
 
 
 class Neuron:
-
     def __init__(self, name=""):
         self.name = name
         self.data = 0
@@ -206,9 +206,103 @@ class NeuronModel:
                     input_neuron_list[index][1] = (input_neuron_list[index][1] * 0.4)
 
 
+def language_processing(input_data):
+    mecab = Mecab()
+
+    # 명사에 대한 yn 데이터 저장
+    # 날개가 있을 경우, check_data['날개'] == 1
+    check_data = dict()
+    for name in [input_neuron.name for input_neuron in InputLayer.all_neuron]:
+        # 우선 check_data 의 모든 데이터를 모른다는 조건으로 초기화
+        check_data[name] = 0
+
+    # [*range(3)] is same with [0, 1, 2]
+    word_list, pos_list = zip(*[(word, pos)
+                                for word, pos in mecab.pos(input_data) if pos in ['VV', 'VA', 'NNG', 'JC', 'SC', 'MAG', 'VX']])
+
+    # 이미 처리한 word 데이터를 False 로 바꾸기 위해
+    # 데이터 변경을 지원하는 리스트로 형 변환. (기존에는 tuple)
+    word_list = list(word_list)
+
+    # 같은 이유
+    pos_list = list(pos_list)
+
+    # 부정적인 성분 부사를 가지고 있는 형용사를 치환
+    # 날개가 안 보인다 --> 날개가 없다
+
+    yn_dict = {
+        '있': 1,
+        '들리': 1,
+        '보이': 1,
+        '없': -1,
+        '모르': 0
+    }
+
+    """
+    for index in range(len(pos_list)):
+        if pos_list[index] == 'MAG' and word_list[index] == '안':  # 성분 부사 이면서 부정 부사 일 경우
+            word_list[index] = '없'  # 부정으로 치환
+
+
+        for i in range(len(pos_list[index:])):  # 부정 부사 뒷 부분 탐색
+            if pos_list[i] in ['VV', 'VA']:  # '있', '없' 등의 데이터가 나올 경우
+                try:
+                    word_list[i] = yn_change[word_list[i]]  # yn_change 를 이용해 반전시킨다
+                except KeyError:
+                    word_list
+                    pass
+    """
+
+    # 형용사를 먼저 탐색하고, 주변 명사를 그룹화 하는 방식으로 처리한다.
+
+    # pos 데이터 중에서 있,없 등의 수식어를 가져옴
+    for index in range(len(pos_list)):
+        if pos_list[index] == 'MAG' and word_list[index] == '안':  # 성분 부사 이면서 부정 부사 일 경우
+            word_list[index] = '없'  # 부정으로 치환
+            pos_list[index] = 'VA'  # pos 데이터도 맞게 변경
+
+        if pos_list[index] in ['VA', 'VV']:  # if pos is yn data
+
+            # 해당 명사에 서술한 내용에 따라 InputLayer Neuron 에 입력함
+            try:
+                yn = yn_dict[word_list[index]]
+            except KeyError:
+                yn = 0
+            finally:
+                # 뒤에 부정적인 보조용언이 올 경우
+                # ex) ~하지 '않'는다
+
+                # 다음 인덱스 부터 탐색
+                tmp_index = index+1
+                while tmp_index < len(pos_list):
+                    if pos_list[tmp_index] == 'VX':
+                        if word_list[tmp_index] == '않':
+                            yn *= -1
+                            break
+                    tmp_index += 1
+
+            # 그 전까지의 모든 명사를 위 yn 데이터로 저장
+            for nng in [word_list[i] for i in range(index) if pos_list[i] == 'NNG']:
+                # 이미 처리한 word 일 경우
+                if nng is False:
+                    continue
+                else:
+                    try:
+                        check_data[nng]
+                    except KeyError:
+                        pass
+                    else:
+                        check_data[nng] = yn
+
+            # 처리한 word 들은 False 으로 치환.
+            word_list[:index] = ([False] * index)
+
+    return check_data
+
+
 if __name__ == '__main__':
 
-    input_list = ['날개', '꼬리', '부리', '깃털', '엔진']
+    input_list = ['날개', '꼬리', '부리', '깃털', '엔진']  # VA, NNG
     conjunction_list = ['합규칙1', '합규칙2', '합규칙3']
     output_list = ['비행기', '새', '글라이더']
 
@@ -220,9 +314,23 @@ if __name__ == '__main__':
     for train_data in all_train_data:
         model.train(train_data)
 
-    answer_list = {'yes': 1, 'no': -1, 'dunno': 0}
+    # 학습 끝
 
-    input_data = [answer_list[input(model.InputLayer[inputlayer_name].name + "가 있나요? yes/no/dunno : ")]
-                  for inputlayer_name in model.InputLayer]
+    # answer_list = {'yes': 1, 'no': -1, 'dunno': 0}
 
-    print("결과 : " + model.get_result(input_data).name)
+    # input_data = [answer_list[input(model.InputLayer[inputlayer_name].name + "가 있나요? yes/no/dunno : ")]
+    #              for inputlayer_name in model.InputLayer]
+
+    # model.get_result(input_data)
+
+    data = "엔진소리가 들리지 않고, 꼬리가 보이지 않는다. 부리가 없다. 또한 깃털도 안보인다"
+    data2 = "엔진과 날개가 있으며  꼬리는 모르겠다. 부리가 안보인다. 아니다, 꼬리가 있다."
+    data3 = "글라이더 같은 데, 잘 알 수 없고 꼬리가 없다. 엔진 소리가 안 들리고 날개가 있다"
+
+    for i in [data, data2, data3]:
+        print("")
+        print(i)
+        print(language_processing(i))
+        print("")
+
+    
