@@ -218,7 +218,8 @@ def language_processing(input_data):
 
     # [*range(3)] is same with [0, 1, 2]
     word_list, pos_list = zip(*[(word, pos)
-                                for word, pos in mecab.pos(input_data) if pos in ['VV', 'VA', 'NNG', 'JC', 'SC', 'MAG', 'VX']])
+                                for word, pos in mecab.pos(input_data)
+                                if pos in ['VV', 'VA', 'NNG', 'JC', 'SC', 'MAG', 'VX']])
 
     # 이미 처리한 word 데이터를 False 로 바꾸기 위해
     # 데이터 변경을 지원하는 리스트로 형 변환. (기존에는 tuple)
@@ -273,7 +274,7 @@ def language_processing(input_data):
                 # ex) ~하지 '않'는다
 
                 # 다음 인덱스 부터 탐색
-                tmp_index = index+1
+                tmp_index = index + 1
                 while tmp_index < len(pos_list):
                     if pos_list[tmp_index] == 'VX':
                         if word_list[tmp_index] == '않':
@@ -316,13 +317,6 @@ if __name__ == '__main__':
 
     # 학습 끝
 
-    # answer_list = {'yes': 1, 'no': -1, 'dunno': 0}
-
-    # input_data = [answer_list[input(model.InputLayer[inputlayer_name].name + "가 있나요? yes/no/dunno : ")]
-    #              for inputlayer_name in model.InputLayer]
-
-    # model.get_result(input_data)
-
     data = "엔진소리가 들리지 않고, 꼬리가 보이지 않는다. 부리가 없다. 또한 깃털도 안보인다"
     data2 = "엔진과 날개가 있으며  꼬리는 모르겠다. 부리가 안보인다. 아니다, 꼬리가 있다."
     data3 = "글라이더 같은 데, 잘 알 수 없고 꼬리가 없다. 엔진 소리가 안 들리고 날개가 있다"
@@ -333,4 +327,10 @@ if __name__ == '__main__':
         print(language_processing(i))
         print("")
 
-    
+    nl_data = language_processing(input("특징을 입력해주세요 : "))
+    print(nl_data)
+    input_data = [nl_data[name] for name in input_list]
+
+    result = model.get_result(input_data)
+
+    print(result.name)
