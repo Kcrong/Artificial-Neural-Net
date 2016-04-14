@@ -1,8 +1,65 @@
 import random
 from konlpy.tag import Mecab
 
+INPUT = ['날개', '꼬리', '부리', '깃털', '엔진']  # VA, NNG
+CONJUNCTION = ['합규칙1', '합규칙2', '합규칙3']
+OUTPUT = ['비행기', '새', '글라이더']
+
+with open('train_data.txt', 'r') as f:
+    ALL_TRAIN_DATA = [
+        [int(data) for data in train_data.split()]  # 분리된 int형 데이터 리스트를 리스트에 추가
+        for train_data in f.readlines()  # 한 줄씩 읽어와
+        if len(train_data) > 1  # 해당 줄이 1글자 이상일 경우에만 리스트에 추가
+        ]
+
+
+class Generation:
+    cnt = 0
+
+    def __init__(self, model_list):
+        Generation.cnt += 1
+        self.generation_level = Generation.cnt
+        self.model_list = model_list
+        self.best_model = self.get_best_model()
+        self.select_list = self.make_select_list()
+
+    def __repr__(self):
+        return "<Generation level %d>" % self.generation_level
+
+    def get_best_model(self):
+        return sorted(self.model_list, key=lambda x: x.fitness, reverse=True)[0]
+
+    def make_select_list(self):
+        # 룰렛 리스트 제작 함수
+        select_list = list()
+
+        for model in self.model_list:
+            select_list += [model for _ in range(model.fitness)]
+
+        return select_list
+
+    def get_parent(self):
+        return (self.select_list[random.randint(0, len(self.select_list) - 1)],
+                self.select_list[random.randint(0, len(self.select_list) - 1)])
+
+    def evolution(self):
+        parents = self.get_parent()
+        parents_weight = [parent.input_weight_dict for parent in parents]
+        child_list = list()
+
+        if parents is None:
+            print(1)
+
+        for _ in range(len(self.model_list)):
+            # TODO: 자식 모델 생성 후, child_list 에 추가
+            print(1)
+
+        return self
+
 
 class Neuron:
+    all_neuron = list()
+
     def __init__(self, name=""):
         self.name = name
         self.data = 0
@@ -10,6 +67,8 @@ class Neuron:
         self.before_neuron = list()
 
         self.__class__.all_neuron.append(self)
+
+        self.id = self.__class__.all_neuron.index(self)
 
     def __repr__(self):
         return "<Neuron %s>" % self.name
@@ -55,6 +114,8 @@ class OutputLayer(Neuron):
 
 
 class NeuronModel:
+    id = 0
+
     @staticmethod
     def setting_layer_dict(input_name_list, conjunction_name_list, output_name_list):
 
@@ -77,6 +138,9 @@ class NeuronModel:
         return inputlayer_dict, conjunctionlayer_dict, outputlayer_dict
 
     def __init__(self, input_name_list, conjunction_name_list, output_name_list):
+        NeuronModel.id += 1
+
+        self.id = NeuronModel.id
 
         self.InputLayer, self.ConjunctionLayer, self.OutputLayer = \
             self.setting_layer_dict(input_name_list, conjunction_name_list, output_name_list)
@@ -86,6 +150,22 @@ class NeuronModel:
 
         # 결합 뉴런과 출력 뉴런 연결
         self.connect_output()
+
+        self.fitness = self.get_fitness()
+
+        print("%s is created!!" % self)
+
+    def refresh_fitness(self):
+        self.fitness = self.get_fitness()
+
+    @property
+    def input_weight_dict(self):
+        weight_dict = dict()
+
+        for layer_name in self.InputLayer:
+            weight_dict[layer_name] = [weight for neuron, weight in self.InputLayer[layer_name].next_neuron]
+
+        return weight_dict
 
     # 결합 뉴런과 N:N 으로 연결
     def connect_conjunction(self):
@@ -122,10 +202,9 @@ class NeuronModel:
         # 모든 결합 뉴런 중, data 가 가장 큰 뉴런 객체를 반환합니다
         return max(OutputLayer.all_neuron, key=lambda output_neuron: output_neuron.data)
 
-    def train(self, train_data):
+    def train(self):
         """
         Train weight of Neural Connect
-        :param train_data: [**input, result]
         """
 
         """
@@ -146,12 +225,8 @@ class NeuronModel:
         """
 
         # train_data[-1] ---> train_result (위 주석에서 언급한 result 값)
-        try:
-            train_neuron = OutputLayer.all_neuron[train_data[-1]]
-        except IndexError:
-            # 학습 데이터에서 빈 줄이 왔을 경우
-            # len(train_data) == 0
-            return None
+
+        train_neuron = OutputLayer.all_neuron[train_data[-1]]
 
         # 실제 가중치 계산을 통해 도출된 출력 뉴런
         result_neuron = self.get_result(train_data)
@@ -159,7 +234,8 @@ class NeuronModel:
         if train_neuron != result_neuron:
             self.fix_weight(train_neuron, result_neuron)
 
-    def fix_weight(self, train_result_neuron, result_neuron):
+    @staticmethod
+    def fix_weight(train_result_neuron, result_neuron):
         """
         :param train_result_neuron: 학습 데이터의 출력 뉴런
         :param result_neuron: 실제 계산 후 도출된 출력 뉴런
@@ -204,6 +280,16 @@ class NeuronModel:
                 else:
                     # 가중치 40% 감소
                     input_neuron_list[index][1] = (input_neuron_list[index][1] * 0.4)
+
+    def get_fitness(self):
+        score = 0
+        for train in ALL_TRAIN_DATA:
+            if self.get_result(train).id == train[-1]:
+                score += 1
+        return score
+
+    def __repr__(self):
+        return "<NeuronModel %d | %d>" % (self.id, self.fitness)
 
 
 def language_processing(input_data):
@@ -305,19 +391,12 @@ def language_processing(input_data):
 
 if __name__ == '__main__':
 
-    input_list = ['날개', '꼬리', '부리', '깃털', '엔진']  # VA, NNG
-    conjunction_list = ['합규칙1', '합규칙2', '합규칙3']
-    output_list = ['비행기', '새', '글라이더']
+    g = Generation([NeuronModel(INPUT, CONJUNCTION, OUTPUT) for _ in range(20)])
 
-    model = NeuronModel(input_list, conjunction_list, output_list)
+    g.evolution()
 
-    """
-    with open('train_data.txt', 'r') as f:
-        all_train_data = [[int(data) for data in train_data.split()] for train_data in f.readlines()]
+    print(1)
 
-    for train_data in all_train_data:
-        model.train(train_data)
-    """
     # 학습 끝
 
     data = "엔진소리가 들리지 않고, 꼬리가 보이지 않는다. 부리가 없다. 또한 깃털도 안보인다"
@@ -332,7 +411,7 @@ if __name__ == '__main__':
 
     nl_data = language_processing(input("특징을 입력해주세요 : \n"))
     print(nl_data)
-    input_data = [nl_data[name] for name in input_list]
+    input_data = [nl_data[name] for name in INPUT]
 
     result = model.get_result(input_data)
 
