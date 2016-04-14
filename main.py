@@ -311,12 +311,13 @@ if __name__ == '__main__':
 
     model = NeuronModel(input_list, conjunction_list, output_list)
 
+    """
     with open('train_data.txt', 'r') as f:
         all_train_data = [[int(data) for data in train_data.split()] for train_data in f.readlines()]
 
     for train_data in all_train_data:
         model.train(train_data)
-
+    """
     # 학습 끝
 
     data = "엔진소리가 들리지 않고, 꼬리가 보이지 않는다. 부리가 없다. 또한 깃털도 안보인다"
