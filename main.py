@@ -1,9 +1,22 @@
 import random
+from numpy import mean
 from konlpy.tag import Mecab
 
+# 입력 뉴런
 INPUT = ['날개', '꼬리', '부리', '깃털', '엔진']  # VA, NNG
+
+# 결합 뉴런
 CONJUNCTION = ['합규칙1', '합규칙2', '합규칙3']
+
+# 출력 뉴런
 OUTPUT = ['비행기', '새', '글라이더']
+
+# 세대 당 DNA(model) 수
+DNA_CNT = 100
+
+# 돌연변이 확률.
+# Ex) 100 일 경우, 1/100 확률로 돌연변이가 나온다.
+MUTATION = 100
 
 with open('train_data.txt', 'r') as f:
     ALL_TRAIN_DATA = [
@@ -11,6 +24,11 @@ with open('train_data.txt', 'r') as f:
         for train_data in f.readlines()  # 한 줄씩 읽어와
         if len(train_data) > 1  # 해당 줄이 1글자 이상일 경우에만 리스트에 추가
         ]
+
+
+class FailEvolution(Exception):
+    def __str__(self):
+        return "모든 모델의 정확도가 0 입니다.."
 
 
 class Generation:
@@ -26,6 +44,10 @@ class Generation:
     def __repr__(self):
         return "<Generation level %d>" % self.generation_level
 
+    @property
+    def fitness(self):
+        return mean([model.fitness for model in self.model_list])
+
     def get_best_model(self):
         return sorted(self.model_list, key=lambda x: x.fitness, reverse=True)[0]
 
@@ -34,27 +56,41 @@ class Generation:
         select_list = list()
 
         for model in self.model_list:
-            select_list += [model for _ in range(model.fitness)]
+            select_list += [model for _ in range(model.fitness+1)]
 
         return select_list
 
     def get_parent(self):
-        return (self.select_list[random.randint(0, len(self.select_list) - 1)],
-                self.select_list[random.randint(0, len(self.select_list) - 1)])
+        try:
+            return (self.select_list[random.randint(0, len(self.select_list) - 1)],
+                    self.select_list[random.randint(0, len(self.select_list) - 1)])
+        except ValueError:
+            raise KeyboardInterrupt
+
+    @staticmethod
+    def make_child(parents):
+        model = NeuronModel(INPUT, CONJUNCTION, OUTPUT)
+
+        # 돌연변이 확률 계산
+        if random.randint(0, MUTATION) == 0:
+            pass
+        else:
+            model.fix_weight(parents)  # 부모의 신경망 가중치로 자식의 가중치 조정
+
+        for train_data in ALL_TRAIN_DATA:
+            model.train(train_data)
+
+        return model
 
     def evolution(self):
         parents = self.get_parent()
-        parents_weight = [parent.input_weight_dict for parent in parents]
+        print("부모로 %s, %s 가 선별" % (parents[0], parents[1]))
         child_list = list()
 
-        if parents is None:
-            print(1)
-
         for _ in range(len(self.model_list)):
-            # TODO: 자식 모델 생성 후, child_list 에 추가
-            print(1)
+            child_list.append(self.make_child(parents))
 
-        return self
+        return Generation(child_list)
 
 
 class Neuron:
@@ -153,7 +189,16 @@ class NeuronModel:
 
         self.fitness = self.get_fitness()
 
-        print("%s is created!!" % self)
+    def fix_weight(self, parents):
+        for input_name in INPUT:
+            for neuron_index in range(len(CONJUNCTION)):
+                which_parent = random.randint(0, 1)  # 어느 부모에서 가중치를 받아올지 정함
+                try:
+                    self.InputLayer[input_name].next_neuron[neuron_index] = \
+                        parents[which_parent].InputLayer[input_name].next_neuron[neuron_index]
+                except TypeError:
+                    raise FailEvolution
+        self.refresh_fitness()
 
     def refresh_fitness(self):
         self.fitness = self.get_fitness()
@@ -202,7 +247,7 @@ class NeuronModel:
         # 모든 결합 뉴런 중, data 가 가장 큰 뉴런 객체를 반환합니다
         return max(OutputLayer.all_neuron, key=lambda output_neuron: output_neuron.data)
 
-    def train(self):
+    def train(self, train_data):
         """
         Train weight of Neural Connect
         """
@@ -232,10 +277,10 @@ class NeuronModel:
         result_neuron = self.get_result(train_data)
 
         if train_neuron != result_neuron:
-            self.fix_weight(train_neuron, result_neuron)
+            self.train_weight(train_neuron, result_neuron)
 
     @staticmethod
-    def fix_weight(train_result_neuron, result_neuron):
+    def train_weight(train_result_neuron, result_neuron):
         """
         :param train_result_neuron: 학습 데이터의 출력 뉴런
         :param result_neuron: 실제 계산 후 도출된 출력 뉴런
@@ -391,9 +436,11 @@ def language_processing(input_data):
 
 if __name__ == '__main__':
 
-    g = Generation([NeuronModel(INPUT, CONJUNCTION, OUTPUT) for _ in range(20)])
+    g = Generation([NeuronModel(INPUT, CONJUNCTION, OUTPUT) for _ in range(DNA_CNT)])
 
-    g.evolution()
+    for _ in range(100):
+        print(g.fitness)
+        g = g.evolution()
 
     print(1)
 
