@@ -438,13 +438,7 @@ if __name__ == '__main__':
 
     g = Generation([NeuronModel(INPUT, CONJUNCTION, OUTPUT) for _ in range(DNA_CNT)])
 
-    for _ in range(100):
-        print(g.fitness)
-        g = g.evolution()
-
-    print(1)
-
-    # 학습 끝
+    model = g.best_model
 
     data = "엔진소리가 들리지 않고, 꼬리가 보이지 않는다. 부리가 없다. 또한 깃털도 안보인다"
     data2 = "엔진과 날개가 있으며  꼬리는 모르겠다. 부리가 안보인다. 아니다, 꼬리가 있다."
