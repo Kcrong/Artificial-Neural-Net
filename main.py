@@ -1,4 +1,5 @@
 import pandas as pd
+from numpy import argmax
 
 from keras.layers import Dense, Activation
 from keras.models import Sequential
@@ -32,7 +33,9 @@ model.compile(
 model.fit(X_train, y_train)
 
 pred = model.predict(X_test)
+pred = argmax(pred, axis=1)
 
+pred = encoder.inverse_transform(pred)
 
 print(pred)
 
