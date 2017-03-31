@@ -1,4 +1,5 @@
 import pandas as pd
+from keras.optimizers import SGD
 from numpy import argmax
 
 from keras.layers import Dense, Activation
@@ -27,8 +28,9 @@ model = Sequential([
 ])
 
 model.compile(
-    optimizer='sgd',
-    loss='sparse_categorical_crossentropy'
+    optimizer=SGD(lr=1e-4),
+    loss='sparse_categorical_crossentropy',
+    metrics=['acc']
 )
 
 model.fit(x_train, y_train)
