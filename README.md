@@ -1,6 +1,12 @@
 # Artificial-Neural-Net-Simple-Example
 파이썬을 이용한 간단한 인공신경망 예제  
     
+유전 알고리즘으로 최적의 모델 찾기: [Train_With_Genetic](https://github.com/Kcrong/Artificial-Neural-Net/tree/Train_With_Genetic)  
+Keras (머신러닝 관련 모듈) 을 이용한 구현: [keras-version](https://github.com/Kcrong/Artificial-Neural-Net/tree/keras-version)
+
+삼각형의 각도를 입력받아 종류 판별하기: [Triangle-type](https://github.com/Kcrong/Artificial-Neural-Net/blob/keras-version/triangle_type.py)
+
+    
 처음 가중치는 랜덤으로 초기화 시키고, 학습 데이터를 이용해 가중치를 조절한다.  
 
 yes -> 있을 경우  
